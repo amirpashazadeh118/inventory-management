@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Register</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f2f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .success {
+        color: green;
+        margin-bottom: 1rem;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .register-container {
+        background: white;
+        padding: 2rem 3rem;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 350px;
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        width: 100%;
+        padding: 0.6rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      button {
+        width: 100%;
+        padding: 0.7rem;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #218838;
+      }
+
+      .error {
+        color: red;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="register-container">
+      <h2>Register</h2>
+
+      <% if (typeof error !== 'undefined') { %>
+      <div class="error"><%= error %></div>
+      <% } %>
+
+      <form id="registerForm" action="/register" method="POST">
+        <input
+          type="text"
+          name="firstName"
+          placeholder="First Name"
+          required
+          value="<%= formData?.firstName || '' %>"
+        />
+        <input
+          type="text"
+          name="lastName"
+          placeholder="Last Name"
+          required
+          value="<%= formData?.lastName || '' %>"
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          required
+          value="<%= formData?.email || '' %>"
+        />
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          required
+          value="<%= formData?.username || '' %>"
+        />
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+        <input
+          type="password"
+          id="confirmPassword"
+          name="confirmPassword"
+          placeholder="Confirm Password"
+          required
+        />
+        <div class="error" id="passwordError" style="display: none"></div>
+        <button type="submit">Sign Up</button>
+        <% if (success) { %>
+          <div style="height: 1rem;"></div>
+        <div class="success"><%= success %></div>
+        <script>
+          setTimeout(function () {
+            window.location.href = "/login"; // Redirect path
+          }, 2500);
+        </script>
+        <% } %>
+      </form>
+    </div>
+
+    <script>
+      document
+        .getElementById("registerForm")
+        .addEventListener("submit", function (e) {
+          const password = document.getElementById("password").value;
+          const confirmPassword =
+            document.getElementById("confirmPassword").value;
+          const errorDiv = document.getElementById("passwordError");
+
+          if (password !== confirmPassword) {
+            e.preventDefault();
+            errorDiv.textContent = "Passwords do not match.";
+            errorDiv.style.display = "block";
+          } else {
+            errorDiv.style.display = "none";
+          }
+        });
+    </script>
+  </body>
+</html>

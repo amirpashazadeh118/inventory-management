@@ -1,53 +1,33 @@
 const express = require('express');
 const app = express();
 const port = 3000;
+const path = require('path');
+const cookieParser = require('cookie-parser');
 
-// راه‌اندازی سرور
+
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
-
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 
-const userRoutes = require('./userRoutes'); 
-app.use('/', userRoutes);
-// ***************************
-const sql = require('mssql');
+let routes = require('./userRoutes').router;
+app.use('', routes);
 
-const config = {
-  server: 'localhost',
-  database: 'hw6',
-  user: 'sa',
-  password: '8Asdfghjkl8asdfghjkl',
-  options: {
-    encrypt: false,
-    trustServerCertificate: true
+routes = require('./inventoryRoutes');
+app.use('/inventory', routes);
+
+routes = require('./partRoutes');
+app.use('/parts', routes);
+
+app.set('views', path.join(__dirname, 'views'));
+
+app.set('view engine', 'ejs');
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/login')) {
+    return res.redirect('/login');
   }
-};
-
-async function queryDb(query, params = []) {
-  try {
-    const pool = await sql.connect(config);
-    const request = pool.request();
-
-    // Add parameters
-    params.forEach(p => {
-      request.input(p.name, p.type, p.value);
-    });
-
-    const result = await request.query(query);
-    return result.recordset;
-  } catch (err) {
-    console.error('DB Query Error:', err);
-    throw err;
-  }
-}
-
-module.exports = { queryDb, sql };
-
-
-
-
-
-
-
+  res.redirect('/login');
+});

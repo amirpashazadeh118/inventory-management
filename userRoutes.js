@@ -1,50 +1,63 @@
 const express = require("express");
 const router = express.Router();
-const { queryDb, sql } = require("./index.js");
-const bcrypt = require("bcrypt");
+const { queryDb, sql } = require("./db");
 const jwt = require("jsonwebtoken");
-const pool = await sql.connect(config);
+const crypto = require("crypto");
 
-module.exports = router;
 
-const JWT_SECRET = "it_is_my_secret_key_amir_bmola";
 
-// controller part
+const JWT_SECRET = "it_is_my_secret_key";
+
 
 // login
-router.post("/Login", async (req, res) => {
-  const token = Login(req);
 
-  res.json({ token });
+router.post("/Login", async (req, res) => {
+  await Login(req, res);
+
+  if (res.statusCode == 200) {
+    res.redirect("0");
+  } else if ((res.statusCode = 401)) {
+    // alert("ثبت نام کن بابا")
+    // res.redirect(res.status);
+  }
 });
 
+router.get("/login", (req, res) => {
+  res.render("login", { error: null });
+});
+
+router.get("/register", (req, res) => {
+  res.render("register", { error: null, formData: null, success: null });
+});
 // Register
 router.post("/Register", async (req, res) => {
-  Register(req, res);
+  await Register(req, res);
 });
 
 // Register put : edit profile
 router.put("/Register", authenticateJWT, async (req, res) => {
-  const token = EditProfile(req, res);
+  const token = await EditProfile(req, res);
 
   res.json({ token });
 });
 
 //  services part
 async function Register(req, res) {
-  const { username, password, firstName, lastName, email } = req.body;
+  const { username, password, Name, email } = req.body;
 
-  var hashPassword = await bcrypt.hash(password, 10);
-
+  var hashPassword = await crypto
+    .createHash("sha256")
+    .update(password)
+    .digest("hex");
   try {
-    await InsertUser(username, hashPassword, firstName, lastName, email, res);
+    await InsertUser(username, hashPassword, Name, email, res);
   } catch (e) {
     res.status(500).send(err.message);
   }
 }
 
 async function EditProfile(req, res) {
-  const { username, password, firstName, lastName, email } = req.body;
+  const { username, password, Name, email } = req.body;
   var user = req.user;
 
   if (!getUserByUsername(username)) {
@@ -52,24 +65,24 @@ async function EditProfile(req, res) {
   }
 
   if (!getUserByEmail(email)) {
-    return res.status(409).json({ message: "کاربری با این ایمیل ثبت نام کرده است." });
+    return res
+      .status(409)
+      .render("register", { error: "کاربری با این ایمیل ثبت نام کرده است." });
   }
 
   try {
-    const result = await pool
-      .request()
-      .input("username", sql.VarChar, username)
-      .input("password", sql.VarChar, password)
-      .input("firstName", sql.VarChar, firstName)
-      .input("lastName", sql.VarChar, lastName)
-      .input("email", sql.VarChar, email)
-      .input("userid", sql.BigInt, user.UserID)
-      .query(
-        `UPDATE User SET 
-          UserName = @username, Password = @password, FirstName = @firstName,
-          LastName = @lastName, Email = @email 
-         WHERE UserID = @userid`
-      );
+    const result = await queryDb(
+      `UPDATE [User] SET 
+    UserName = @username, Password = @password, Name = @Name, Email = @email 
+   WHERE UserID = @userid`,
+      [
+        { name: "username", type: sql.VarChar, value: username },
+        { name: "password", type: sql.VarChar, value: password },
+        { name: "Name", type: sql.VarChar, value: Name },
+        { name: "email", type: sql.VarChar, value: email },
+        { name: "userid", type: sql.BigInt, value: user.UserID },
+      ]
+    );
   } catch (err) {
     throw err;
   }
@@ -81,29 +94,30 @@ async function EditProfile(req, res) {
   );
 }
 
-async function Login(req) {
+async function Login(req, res) {
   const { username, password } = req.body;
 
-  var hashPassword = await bcrypt.hash(password, 10);
+  var hashPassword = await crypto
+    .createHash("sha256")
+    .update(password)
+    .digest("hex");
 
   var user = await getUserByCredentials(username, hashPassword);
   if (user == null) {
-    res.status(401).send("رمز یا نام کاربری اشتباه است.");
+    return res
+      .status(401)
+      .render("login", { error: "رمز یا نام کاربری اشتباه است." });
   }
 
   var roles = [];
   try {
-    if (await isAdmin(user)) {
+    if (isAdmin(user)) {
       roles.push("admin");
-    } else if (await isTeacher(user)) {
-      roles.push("teacher");
-    } else if (await isStudent(user)) {
-      roles.push("student");
     } else {
-      throw new Error("without roll");
+      roles.push("user");
     }
   } catch (err) {
-    res.status(500).send(err.message);
+    return res.status(500).render("login", { error: err.message });
   }
 
   const token = jwt.sign(
@@ -111,16 +125,23 @@ async function Login(req) {
     JWT_SECRET,
     { expiresIn: "1h" }
   );
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    maxAge: 60 * 60 * 1000, // 1 hour
+  });
+
+  res.redirect("/inventory/term-courses");
 }
 
 function authenticateJWT(req, res, next) {
-  const authHeader = req.headers.authorization;
+  const token = req.cookies.token;
 
-  if (authHeader) {
-    const token = authHeader.split(" ")[1];
-
+  if (token) {
     jwt.verify(token, JWT_SECRET, (err, user) => {
-      if (err) return res.sendStatus(403);
+      if (err) {
+        return res.sendStatus(403);
+      }
       req.user = user;
       next();
     });
@@ -132,108 +153,140 @@ function authenticateJWT(req, res, next) {
 function authorizeRoles(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user || !req.user.roles) {
-      return res.status(403).json({ message: "دسترسی غیر مجاز" });
+      res.redirect('/login');
     }
 
     const hasRole = req.user.roles.some((role) => allowedRoles.includes(role));
     if (!hasRole) {
-      return res.status(403).json({ message: "دسترسی غیر مجاز" });
+      res.redirect('/login');
     }
 
     next();
   };
 }
 
-async function InsertUser(username, password, firstName, lastName, email, res) {
-  if (!getUserByUsername(username)) {
-    return res.status(409).json({ message: "نام کاربری تکراری است." });
+async function InsertUser(username, password, Name, email, res) {
+  if (!(await getUserByUsername(username))) {
+    return res.status(409).render("register", {
+      error: "نام کاربری تکراری است.",
+      formData: {
+        Name,
+        email,
+        username,
+      },
+      success: null,
+    });
   }
 
-  if (!getUserByEmail(email)) {
-    return res.status(409).json({ message: "کاربری با این ایمیل ثبت نام کرده است." });
+  if (!(await getUserByEmail(email))) {
+    return res.status(409).render("register", {
+      error: "کاربری با این ایمیل ثبت نام کرده است.",
+      formData: {
+        Name,
+        email,
+        username,
+      },
+      success: null,
+    });
   }
 
   try {
-    const result = await pool
-      .request()
-      .input("username", sql.VarChar, username)
-      .input("password", sql.VarChar, password)
-      .input("firstName", sql.VarChar, firstName)
-      .input("lastName", sql.VarChar, lastName)
-      .input("email", sql.VarChar, email)
-      .query(
-        "INSERT INTO User( username, password, firstName, lastName, email) VALUES ( @username, @password, @firstName, @lastName, @email)"
-      );
+    const result = await queryDb(
+      "INSERT INTO [User](username, password, name, email, IsAdmin) VALUES (@username, @password, @name, @email, 0)",
+      [
+        { name: "username", type: sql.VarChar, value: username },
+        { name: "password", type: sql.VarChar, value: password },
+        { name: "Name", type: sql.VarChar, value: Name },
+        { name: "email", type: sql.VarChar, value: email },
+      ]
+    );
   } catch (err) {
+    throw err;
+  }
+
+  res.render("register", {
+    success: "Registration successful! Redirecting...",
+    formData: {
+      Name,
+      email,
+      username,
+    },
+  });
+}
+
+async function getUserByCredentials(username, hashPassword) {
+  try {
+    const result = await queryDb(
+      "SELECT * FROM [User] WHERE Username = @username AND IsActive = 1",
+      [{ name: "username", type: sql.VarChar, value: username }]
+    );
+
+    if (result.length == 0) return null;
+
+    const user = result[0];
+
+    const isMatch = hashPassword == user.password; 
+
+    if (!isMatch) return null;
+
+    return user;
+  } catch (err) {
+    console.error("Error in getUserByCredentials:", err);
     throw err;
   }
 }
 
-async function getUserByCredentials(username, password) {
-  try {
-    const result = await pool
-      .request()
-      .input("username", sql.VarChar, username)
-      .input("password", sql.VarChar, password)
-      .query(
-        "SELECT * FROM Users WHERE Username = @username AND Password = @password"
-      );
-    return result.recordset[0];
-  } catch (err) {
-    console.error("Error in getUserByCredentials:", err);
-    return null;
-  }
-}
-
 async function getUserByEmail(email) {
-  var result = await queryDb("SELECT TOP 1 * FROM User WHERE Email = @email", [
-    { name: "email", type: sql.NVarChar, value: email },
-  ]);
+  var result = await queryDb(
+    "SELECT TOP 1 * FROM [User] WHERE Email = @email",
+    [{ name: "email", type: sql.NVarChar, value: email }]
+  );
 
-  if (result.recordset[0] != null) {
+  if (result.length == 0) {
     return true;
   }
+  return false;
 }
 
 async function getUserByUsername(username) {
-  var result = await queryDb("SELECT TOP 1 * FROM User WHERE UserName = @username", [
-    { name: "username", type: sql.NVarChar, value: username },
-  ]);
+  var result = await queryDb(
+    "SELECT TOP 1 * FROM [User] where UserName = @username",
+    [{ name: "username", type: sql.NVarChar, value: username }]
+  );
 
-  if (result.recordset[0] != null) {
+  if (result.length == 0) {
     return true;
   }
+  return false;
 }
 
-async function isAdmin(user) {
-  var result = await queryDb("SELECT * FROM Admin WHERE UserID = @userid", [
-    { name: "userid", type: sql.BigInt, value: user.id }
-  ]);
-
-  if (result.recordset[0] != null) {
+function isAdmin(user) {
+  if (user.isAdmin != 0) {
     return true;
   }
+  return false;
 }
 
-async function isTeacher(user) {
-  var result = await queryDb("SELECT * FROM Teacher WHERE UserID = @userid", [
-    { name: "userid", type: sql.BigInt, value: user.id }
-  ]);
+// async function isCustomer(user) {
+//   var result = await queryDb("SELECT * FROM Teacher WHERE UserRef = @userid", [
+//     { name: "userid", type: sql.BigInt, value: user.UserID },
+//   ]);
 
-  if (result.recordset[0] != null) {
-    return true;
-  }
-}
+//   if (result.length != 0) {
+//     return true;
+//   }
+//   return false;
+// }
 
-async function isStudent(user) {
-  var result = await queryDb("SELECT * FROM Student WHERE UserID = @userid", [
-    { name: "userid", type: sql.BigInt, value: user.id }
-  ]);
+// async function isSeller(user) {
+//   var result = await queryDb("SELECT * FROM Student WHERE UserRef = @userid", [
+//     { name: "userid", type: sql.BigInt, value: user.UserID },
+//   ]);
 
-  if (result.recordset[0] != null) {
-    return true;
-  }
-}
+//   if (result.length != 0) {
+//     return true;
+//   }
+//   return false;
+// }
 
-
-module.exports = { authorizeRoles, authenticateJWT };
+module.exports = {router, authorizeRoles, authenticateJWT};

@@ -1,94 +1,104 @@
-use hw6;
-IF Object_ID('User') IS NULL
-CREATE TABLE [User](
-    [UserID] [BIGINT] NOT NULL PRIMARY KEY IDENTITY(1,1),
-	[UserName] nvarchar(50) NOT NULL,
-	[password] nvarchar(100) NOT NULL,
-	[FirstName] nvarchar(50) NULL,
-	[LastName] nvarchar(50) NOT NULL,
-	[Email] nvarchar(50) NOT NULL,
-	IsActive BIT NOT NULL
-)
+IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = N'ProjectDB')
+    CREATE DATABASE [ProjectDB];
 GO
 
-IF Object_ID('Admin') IS NULL
-CREATE TABLE [Admin](
-    [AdminID] [BIGINT] NOT NULL PRIMARY KEY IDENTITY(1,1),
-	[UserRef] [BIGINT] NOT NULL,
-	CONSTRAINT FK_Admin_User FOREIGN KEY (UserRef) REFERENCES [User](UserID)
-)
-GO
-
-IF Object_ID('Teacher') IS NULL
-CREATE TABLE [Teacher](
-    [TeacherID] [BIGINT] NOT NULL PRIMARY KEY IDENTITY(1,1),
-	[UserRef] [BIGINT] NOT NULL,
-	[Code] nvarchar(50) NOT NULL,
-	CONSTRAINT FK_Teacher_User FOREIGN KEY (UserRef) REFERENCES [User](UserID)
-)
-GO
-
-IF Object_ID('Student') IS NULL
-CREATE TABLE [Student](
-    [StudentID] [BIGINT] NOT NULL PRIMARY KEY IDENTITY(1,1),
-	[UserRef] [BIGINT] NOT NULL,
-	[Code] nvarchar(50) NOT NULL,
-	CONSTRAINT FK_Student_User FOREIGN KEY (UserRef) REFERENCES [User](UserID)
-)
-GO
-
-IF Object_ID('Course') IS NULL
-CREATE TABLE [Course](
-    [CourseID] [BIGINT] NOT NULL PRIMARY KEY IDENTITY(1,1),
-	[Name] nvarchar(50) NOT NULL,
-	[Code] BIGINT NOT NULL UNIQUE,
-	[Detail] nvarchar(50) NOT NULL,
-	[Credit] INT NOT NULL,
-	CONSTRAINT Course_CreditRange CHECK (0<[Credit] AND [Credit]<6),
-)
-GO
-
-IF Object_ID('Term') IS NULL
-CREATE TABLE [Term](
-    [TermID] [BIGINT] NOT NULL PRIMARY KEY IDENTITY(1,1),
-	[Name] nvarchar(50) NOT NULL,
-	[StartDate] [DateTime] NOT NULL,
-	[EndDate] nvarchar(50) NULL,
-)
-GO
-
-IF OBJECT_ID('Class') IS NULL
-CREATE TABLE [Class] (
-    [ClassID] BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
-    [CourseRef] NVARCHAR(50) NOT NULL,
-    [TermRef] BIGINT NOT NULL,
-    [TeacherRef] BIGINT NULL,
-	[Capacity] INT NOT NULL,
-    CONSTRAINT FK_Class_Teacher FOREIGN KEY (TeacherRef) REFERENCES Teacher(TeacherID),
-	CONSTRAINT FK_Class_Term FOREIGN KEY (TermRef) REFERENCES Term(TermID),
-	CONSTRAINT Class_ScoreRange CHECK (0 < Capacity)
+USE [ProjectDB];
+-- TABLE: Categorization
+IF OBJECT_ID('Categorization') IS NULL
+CREATE TABLE Categorization (
+  CategorizationID BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+  Name NVARCHAR(100) NOT NULL
 );
+GO
 
-IF OBJECT_ID('StudentClass') IS NULL
-CREATE TABLE [StudentClass] (
-    [StudentClassID] BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
-    [ClassRef] BIGINT NOT NULL,
-    [StudentRef] BIGINT NOT NULL,
-	[Score] INT NULL,
-    CONSTRAINT FK_StudentClass_Student FOREIGN KEY (StudentRef) REFERENCES Student(StudentID),
-	CONSTRAINT FK_StudentClass_Class FOREIGN KEY (ClassRef) REFERENCES Class(ClassID),
-	CONSTRAINT StudentClass_ScoreRange CHECK (Score <21 AND -1 < Score)
+-- TABLE: Part
+IF OBJECT_ID('Part') IS NULL
+CREATE TABLE Part (
+  PartID BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+  Name NVARCHAR(100) NOT NULL,
+  CategorizationRef BIGINT NOT NULL,
+  Remaining INT NOT NULL,
+  Cost BIGINT NOT NULL,
+  CONSTRAINT FK_Part_Categorization FOREIGN KEY (CategorizationRef) REFERENCES Categorization(CategorizationID)
 );
+GO
 
-IF OBJECT_ID('Messages') IS NULL
-CREATE TABLE [Messages] (
-    [MessagesID] BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
-    [TeacherRef] BIGINT NOT NULL,
-    [ClassRef] BIGINT NOT NULL,
-	[Title] NVARCHAR(50) NOT NULL,
-    [Detail] NVARCHAR(500) NOT NULL,
-	[CreateAt] DATETIME NOT NULL,
-    CONSTRAINT FK_Messages_Teacher FOREIGN KEY (TeacherRef) REFERENCES Teacher(TeacherID),
-	CONSTRAINT FK_Messages_Class FOREIGN KEY (ClassRef) REFERENCES Class(ClassID),
+-- TABLE: User
+IF OBJECT_ID('[User]') IS NULL
+CREATE TABLE [User] (
+  UserID BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+  Name NVARCHAR(100) NOT NULL,
+  UserName NVARCHAR(100) NOT NULL,
+  [Password] NVARCHAR(100) NOT NULL,
+  IsAdmin BIT NOT NULL
 );
+GO
 
+-- TABLE: [Order]
+IF OBJECT_ID('[Order]') IS NULL
+CREATE TABLE [Order] (
+  OrderID BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+  [Description] NVARCHAR(200) NOT NULL,
+  CreateAt DATETIME NOT NULL,
+  TotalCost BIGINT NOT NULL,
+  UserRef BIGINT NOT NULL,
+  CONSTRAINT FK_Order_User FOREIGN KEY (UserRef) REFERENCES [User](UserID)
+);
+GO
+
+-- TABLE: OrderItem
+IF OBJECT_ID('OrderItem') IS NULL
+CREATE TABLE OrderItem (
+  OrderItemID BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+  RowNumber INT NOT NULL,
+  Number INT NOT NULL,
+  State INT NOT NULL,
+  OrderRef BIGINT NOT NULL,
+  PartRef BIGINT NOT NULL,
+  CONSTRAINT FK_OrderItem_Order FOREIGN KEY (OrderRef) REFERENCES [Order](OrderID),
+  CONSTRAINT FK_OrderItem_Part FOREIGN KEY (PartRef) REFERENCES Part(PartID)
+);
+GO
+
+-- TABLE: InventoryVoucher
+IF OBJECT_ID('InventoryVoucher') IS NULL
+CREATE TABLE InventoryVoucher (
+  InventoryVoucherID BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+  [Description] NVARCHAR(200) NOT NULL,
+  CreateAt DATETIME NOT NULL,
+  UserRef BIGINT NOT NULL,
+  CONSTRAINT FK_InventoryVoucher_User FOREIGN KEY (UserRef) REFERENCES [User](UserID)
+);
+GO
+
+-- TABLE: InventoryVoucherItem
+IF OBJECT_ID('InventoryVoucherItem') IS NULL
+CREATE TABLE InventoryVoucherItem (
+  InventoryVoucherItemID BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+  RowNumber INT NOT NULL,
+  Number INT NOT NULL,
+  State INT NOT NULL,
+  InventoryVoucherRef BIGINT NOT NULL,
+  PartRef BIGINT NOT NULL,
+  CONSTRAINT FK_InventoryVoucherItem_InventoryVoucher FOREIGN KEY (InventoryVoucherRef) REFERENCES InventoryVoucher(InventoryVoucherID),
+  CONSTRAINT FK_InventoryVoucherItem_Part FOREIGN KEY (PartRef) REFERENCES Part(PartID)
+);
+GO
+
+-- TABLE: MoneyType
+IF OBJECT_ID('MoneyType') IS NULL
+CREATE TABLE MoneyType (
+  MoneyTypeID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+  Name NVARCHAR(50) NOT NULL
+);
+GO
+
+-- TABLE: Settings
+IF OBJECT_ID('Settings') IS NULL
+CREATE TABLE Settings (
+  SettingsID INT NOT NULL PRIMARY KEY CHECK (SettingsID = 1),
+  LimmitOfLowCount INT NOT NULL,
+  MoneyTypeRef BIGINT NOT NULL,
+  CONSTRAINT FK_Settings_MoneyType FOREIGN KEY (MoneyTypeRef) REFERENCES MoneyType(MoneyTypeID)
+);
+GO

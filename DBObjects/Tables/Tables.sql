@@ -44,6 +44,8 @@ CREATE TABLE [Order] (
   UserRef BIGINT NOT NULL,
   [State] INT NOT NULL,
   [PartID] BIGINT NOT NULL,
+  [Cost] BIGINT NOT NULL,
+  [Count] INT NOT NULL
   CONSTRAINT FK_Order_User FOREIGN KEY (UserRef) REFERENCES [User](UserID),
   CONSTRAINT FK_Order_Part FOREIGN KEY (PartRef) REFERENCES [Part](PartID)
 );

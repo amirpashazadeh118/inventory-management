@@ -42,6 +42,15 @@ router.post(
   }
 );
 
+router.put(
+  "/Order",
+  authenticateJWT,
+  authorizeRoles("admin"),
+  async (req, res) => {
+    acceptOrder(req, res);
+  }
+);
+
 // service part
 async function createCategory(req, res) {
   const { Name,	CategorizationRef, Cost } = req.body;
@@ -153,4 +162,27 @@ async function createOrder(req, res) {
   } catch (err) {
     res.status(500).send(err.message);
   }
+}
+
+async function acceptOrder(req, res) {
+  const { orderID } = req.body;
+
+  // try {
+  //   const result = await queryDb(
+  //     `INSERT INTO [Order] (Description, CreateAt, TotalCost, UserRef)
+  //     VALUES (@Description, getDate(), @TotalCost, @UserRef, 1, @PartID, @Count, @Cost)`,
+  //     [
+  //       { name: "Description", type: sql.NVarChar, value: Description },
+  //       { name: "TotalCost", type: sql.BigInt, value: TotalCost },
+  //       { name: "UserRef", type: sql.BigInt, value: user.id },
+  //       { name: "PartID", type: sql.BigInt, value: PartID },
+  //       { name: "Cost", type: sql.BigInt, value: Cost },
+  //       { name: "Count", type: sql.BigInt, value: Count }
+  //     ]
+  //   );
+  //   const orderId = result.recordset[0].orderID;
+  //   res.status(200).send({ id: orderId }); 
+  // } catch (err) {
+  //   res.status(500).send(err.message);
+  // }
 }

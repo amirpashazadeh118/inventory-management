@@ -7,7 +7,7 @@ module.exports = router;
 
 // controller part
 router.post(
-  "/part",
+  "/Part",
   authenticateJWT,
   authorizeRoles("admin", "user"),
   async (req, res) => {
@@ -15,8 +15,17 @@ router.post(
   }
 );
 
+router.post(
+  "/IncreasePart",
+  authenticateJWT,
+  authorizeRoles("admin", "user"),
+  async (req, res) => {
+    increasePart(req, res);
+  }
+);
+
 // service part
-async function GetCurrentCourses(req, res) {
+async function createPart(req, res) {
   const { Name,	CategorizationRef, Cost } = req.body;
 
   try {
@@ -43,6 +52,32 @@ async function GetCurrentCourses(req, res) {
     );
     const insertedId = result.recordset[0].PartID;
     res.status(200).send({ id: insertedId }); 
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+async function increasePart(req, res) {
+  const { PartID,	Count } = req.body;
+
+  try {
+    let parts = await queryDb(
+      `Select 1 FROM Part t
+      where PartID = @partId`,
+      [{ name: "name", type: sql.BigInt, value: Name }]
+    );
+    if(parts.length = 0)
+      res.status(400).send("There is no part with that ID!");
+
+    const newCount = parts[0].Remaining + Count;
+
+    await queryDb(
+      `UPDATE Part SET Remaining = @newCount where PartID = @partId`,
+      [
+        { name: "newCount", type: sql.Int, value: newCount },
+        { name: "partId", type: sql.BigInt, value: PartID }
+      ]
+    );
   } catch (err) {
     res.status(500).send(err.message);
   }

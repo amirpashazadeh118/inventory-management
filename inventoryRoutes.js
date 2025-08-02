@@ -7,6 +7,15 @@ module.exports = router;
 
 // controller part
 router.post(
+  "/Category",
+  authenticateJWT,
+  authorizeRoles("admin", "user"),
+  async (req, res) => {
+    createCategory(req, res);
+  }
+);
+
+router.post(
   "/Part",
   authenticateJWT,
   authorizeRoles("admin", "user"),
@@ -25,6 +34,36 @@ router.post(
 );
 
 // service part
+async function createCategory(req, res) {
+  const { Name,	CategorizationRef, Cost } = req.body;
+
+  try {
+    let category = await queryDb(
+      `Select 1 FROM Categorization t
+      where Name = @name`,
+      [{ name: "name", type: sql.NVarChar, value: Name }]
+    );
+    if(category.length > 0)
+      res.status(400).send("This name is already choosed for a Categorization. enter another name!");
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+
+  try {
+    const result = await queryDb(
+      `INSERT INTO Categorization (Name)
+      VALUES (@name)`,
+      [
+        { name: "name", type: sql.NVarChar, value: Name }
+      ]
+    );
+    const insertedId = result.recordset[0].CategorizationID;
+    res.status(200).send({ id: insertedId }); 
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
 async function createPart(req, res) {
   const { Name,	CategorizationRef, Cost } = req.body;
 

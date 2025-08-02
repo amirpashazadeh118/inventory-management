@@ -25,9 +25,11 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.set('view engine', 'ejs');
 
-app.use((req, res, next) => {
-  if (req.path.startsWith('/login')) {
-    return res.redirect('/login');
-  }
-  res.redirect('/login');
-});
+//TODO uncomment this code :
+
+// app.use((req, res, next) => {
+//   if (req.path.startsWith('/login')) {
+//     return res.redirect('/login');
+//   }
+//   res.redirect('/login');
+// });

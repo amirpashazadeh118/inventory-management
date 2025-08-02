@@ -13,13 +13,6 @@ const JWT_SECRET = "it_is_my_secret_key";
 
 router.post("/Login", async (req, res) => {
   await Login(req, res);
-
-  if (res.statusCode == 200) {
-    res.redirect("0");
-  } else if ((res.statusCode = 401)) {
-    // alert("ثبت نام کن بابا")
-    // res.redirect(res.status);
-  }
 });
 
 router.get("/login", (req, res) => {
@@ -94,7 +87,27 @@ async function EditProfile(req, res) {
   );
 }
 
+function isLoggedIn(req, res){
+  const token = req.cookies.token;
+
+  if (token) {
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) {
+        return false;
+      }
+      req.user = user;
+      return true;
+    });
+  } else {
+    return false;
+  }
+}
+
 async function Login(req, res) {
+  if(isLoggedIn(req,res)){
+    res.redirect("/inventory/term-courses");
+  }
+
   const { username, password } = req.body;
 
   var hashPassword = await crypto

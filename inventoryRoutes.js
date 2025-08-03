@@ -53,7 +53,7 @@ router.put(
 );
 
 router.get(
-  "/part",
+  "/Part",
   authenticateJWT,
   authorizeRoles("admin", "user"),
   async (req, res) => {
@@ -61,7 +61,27 @@ router.get(
   }
 );
 
+router.get(
+  "/Categorization",
+  authenticateJWT,
+  authorizeRoles("admin", "user"),
+  async (req, res) => {
+    getCategorization(req, res);
+  }
+);
 // service part
+async function getCategorization(req, res) {
+  try {
+    let categories = await queryDb(
+      "Select * FROM Categorization ",
+      []
+    );
+    res.status(200).send(categories);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
 async function getPartWithFilter(req, res) {
   const { Name,	CategorizationRef} = req.query;
 

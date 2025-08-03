@@ -52,7 +52,55 @@ router.put(
   }
 );
 
+router.get(
+  "/part",
+  authenticateJWT,
+  authorizeRoles("admin", "user"),
+  async (req, res) => {
+    getPartWithFilter(req, res);
+  }
+);
+
 // service part
+async function getPartWithFilter(req, res) {
+  const { Name,	CategorizationRef} = req.query;
+
+  var filterQuery = null;
+  if(Name != null){
+    filterQuery = `Where p.Name like N'%${Name}%'`;
+  } else if(CategorizationRef != null){
+    filterQuery = `Where p.CategorizationRef = ${CategorizationRef}`;
+  }
+
+  if(CategorizationRef != null && filterQuery != null){
+    filterQuery = `and Where p.Name like N'%${Name}%'`;
+  }
+
+  try {
+    let parts = await queryDb(
+      "Select * FROM Part p" + filterQuery,
+      []
+    );
+    res.status(200).send(parts);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+
+  try {
+    const result = await queryDb(
+      `INSERT INTO Categorization (Name)
+      VALUES (@name)`,
+      [
+        { name: "name", type: sql.NVarChar, value: Name }
+      ]
+    );
+    const insertedId = result.recordset[0].CategorizationID;
+    res.status(200).send({ id: insertedId }); 
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
 async function createCategory(req, res) {
   const { Name,	CategorizationRef, Cost } = req.body;
 
@@ -176,7 +224,7 @@ async function acceptOrder(req, res) {
           { name: "OrderID", type: sql.BigInt, value: orderID }
         ]
       );
-      sendSMS("Order Rejected",`order ${orderID} rejected`);
+      sendEmail("Order Rejected",`order ${orderID} rejected`);
       res.status(200).send({ id: orderId }); 
     } catch (err) {
       res.status(500).send(err.message);
@@ -205,7 +253,7 @@ async function acceptOrder(req, res) {
         ]
       );
 
-      sendSMS("Order Accepted",`order ${orderID} accepted`);
+      sendEmail("Order Accepted",`order ${orderID} accepted`);
 
       const partRemaining = await queryDb(
         `Select Remaining FROM [Part] where PartID = @PartID`,
@@ -215,7 +263,7 @@ async function acceptOrder(req, res) {
       );
       var RemainingNow = part.partRemaining[0];
       if(RemainingNow < 10){
-        sendSMS("LOW Part Remaining",`there is just RemainingNow of ${partName} in ${inventory}`);
+        sendEmail("LOW Part Remaining",`there is just RemainingNow of ${partName} in ${inventory}`);
       }
     } catch (err) {
       res.status(500).send(err.message);
@@ -225,7 +273,7 @@ async function acceptOrder(req, res) {
   }
 }
 
-async function sendSMS(subject, text) {
+async function sendEmail(subject, text) {
   try {
     const transporter = nodemailer.createTransport({
       service: 'gmail',

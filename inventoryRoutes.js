@@ -53,6 +53,15 @@ router.put(
 );
 
 router.get(
+  "/PartLow",
+  authenticateJWT,
+  authorizeRoles("admin", "user"),
+  async (req, res) => {
+    getPartLow(req, res);
+  }
+);
+
+router.get(
   "/Part",
   authenticateJWT,
   authorizeRoles("admin", "user"),
@@ -70,6 +79,18 @@ router.get(
   }
 );
 // service part
+async function getPartLow(req, res) {
+  try {
+    let parts = await queryDb(
+      "Select * FROM Part where Remaining < 10 ",
+      []
+    );
+    res.status(200).send(parts);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
 async function getCategorization(req, res) {
   try {
     let categories = await queryDb(

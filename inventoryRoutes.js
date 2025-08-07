@@ -53,6 +53,16 @@ router.put(
 );
 
 router.get(
+  "/Part",
+  authenticateJWT,
+  authorizeRoles("admin", "user"),
+  async (req, res) => {
+    getOrderWithFilter(req, res);
+  }
+);
+
+
+router.get(
   "/PartLow",
   authenticateJWT,
   authorizeRoles("admin", "user"),
@@ -103,6 +113,46 @@ async function getCategorization(req, res) {
   }
 }
 
+async function getOrderWithFilter(req, res) {
+  const { partName, state, beforeTime, afterTime} = req.query;
+
+  var filterQuery = " where ";
+  var isFiltered = false;
+  if(Name != null){
+    if(isFiltered) filterQuery = filterQuery + " and "
+    isFiltered = true;
+    filterQuery = `p.Name like N'%${partName}%'`;
+  }
+  if(state != null){
+    if(isFiltered) filterQuery = filterQuery + " and "
+    isFiltered = true;
+    filterQuery = `state = ${state}`;
+  }
+  if(beforeTime != null){
+    if(isFiltered) filterQuery = filterQuery + " and "
+    isFiltered = true;
+    filterQuery = `createdAt < ${beforeTime}`;
+  }
+  if(afterTime != null){
+    if(isFiltered) filterQuery = filterQuery + " and "
+    isFiltered = true;
+    filterQuery = `createdAt > ${afterTime}`;
+  }
+
+  var lastQuery = "Select * FROM [order] o join part p on p.PartID = o.partRef ";
+  if(isFiltered)lastQuery = lastQuery + filterQuery;
+
+  try {
+    let parts = await queryDb(
+      lastQuery,
+      []
+    );
+    res.status(200).send(parts);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
 async function getPartWithFilter(req, res) {
   const { Name,	CategorizationRef} = req.query;
 
@@ -123,20 +173,6 @@ async function getPartWithFilter(req, res) {
       []
     );
     res.status(200).send(parts);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-
-  try {
-    const result = await queryDb(
-      `INSERT INTO Categorization (Name)
-      VALUES (@name)`,
-      [
-        { name: "name", type: sql.NVarChar, value: Name }
-      ]
-    );
-    const insertedId = result.recordset[0].CategorizationID;
-    res.status(200).send({ id: insertedId }); 
   } catch (err) {
     res.status(500).send(err.message);
   }

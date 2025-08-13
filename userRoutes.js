@@ -36,16 +36,16 @@ router.put("/Register", authenticateJWT, async (req, res) => {
 
 //  services part
 async function Register(req, res) {
-  const { username, password, Name, email } = req.body;
+  const { username, password, name, email } = req.body;
 
   var hashPassword = await crypto
     .createHash("sha256")
     .update(password)
     .digest("hex");
   try {
-    await InsertUser(username, hashPassword, Name, email, res);
+    await InsertUser(username, hashPassword, name, email, res);
   } catch (e) {
-    res.status(500).send(err.message);
+    res.status(500).send(e.message);
   }
 }
 

@@ -54,13 +54,13 @@ async function EditProfile(req, res) {
   var user = req.user;
 
   if (!getUserByUsername(username)) {
-    return res.status(409).json({ message: "نام کاربری تکراری است." });
+    return res.status(409).json({ message: "User name has been used before" });
   }
 
   if (!getUserByEmail(email)) {
     return res
       .status(409)
-      .json({ error: "کاربری با این ایمیل ثبت نام کرده است." });
+      .json({ error: "This email has been used before by another user" });
   }
 
   try {
@@ -119,7 +119,7 @@ async function Login(req, res) {
   if (user == null) {
     return res
       .status(401)
-      .json({ error: "رمز یا نام کاربری اشتباه است." });
+      .json({ error: "Password or username is WRONG" });
   }
 
   var roles = [];
@@ -181,14 +181,14 @@ function authorizeRoles(...allowedRoles) {
 async function InsertUser(username, password, Name, email, res) {
   if (!(await getUserByUsername(username))) {
     return res.status(409).json({
-      error: "نام کاربری تکراری است.",
+      error: "This username has been used before",
       success: null,
     });
   }
 
   if (!(await getUserByEmail(email))) {
     return res.status(409).json({
-      error: "کاربری با این ایمیل ثبت نام کرده است.",
+      error: "This email has been used before by another user",
       success: null,
     });
   }

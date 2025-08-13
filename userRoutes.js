@@ -102,9 +102,8 @@ function isLoggedIn(req, res) {
 
 
 async function Login(req, res) {
-  var x = isLoggedIn(req,res);
   if(isLoggedIn(req,res)){
-    res.redirect("/inventory/term-courses");
+    return res.status(200).json({result: "success"});
   }
 
   const { username, password } = req.body;

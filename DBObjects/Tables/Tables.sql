@@ -59,20 +59,9 @@ CREATE TABLE InventoryVoucher (
   [Description] NVARCHAR(200) NOT NULL,
   CreateAt DATETIME NOT NULL,
   UserRef BIGINT NOT NULL,
-  CONSTRAINT FK_InventoryVoucher_User FOREIGN KEY (UserRef) REFERENCES [User](UserID)
-);
-GO
-
--- TABLE: InventoryVoucherItem
-IF OBJECT_ID('InventoryVoucherItem') IS NULL
-CREATE TABLE InventoryVoucherItem (
-  InventoryVoucherItemID BIGINT NOT NULL PRIMARY KEY IDENTITY(1,1),
-  RowNumber INT NOT NULL,
   Number INT NOT NULL,
-  State INT NOT NULL,
-  InventoryVoucherRef BIGINT NOT NULL,
   PartRef BIGINT NOT NULL,
-  CONSTRAINT FK_InventoryVoucherItem_InventoryVoucher FOREIGN KEY (InventoryVoucherRef) REFERENCES InventoryVoucher(InventoryVoucherID),
+  CONSTRAINT FK_InventoryVoucher_User FOREIGN KEY (UserRef) REFERENCES [User](UserID),
   CONSTRAINT FK_InventoryVoucherItem_Part FOREIGN KEY (PartRef) REFERENCES Part(PartID)
 );
 GO

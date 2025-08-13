@@ -241,7 +241,8 @@ async function createPart(req, res) {
 }
 
 async function increasePart(req, res) {
-  const { PartID,	Count } = req.body;
+  const { PartID,	Count, Description } = req.body;
+  const user = req.user;
 
   try {
     let parts = await queryDb(
@@ -259,6 +260,16 @@ async function increasePart(req, res) {
       [
         { name: "newCount", type: sql.Int, value: newCount },
         { name: "partId", type: sql.BigInt, value: PartID }
+      ]
+    );
+
+    await queryDb(
+      "INSERT INTO [InventoryVoucher](Description, CraetedAt, UserRef, Number, PartRef) VALUES (@description, getDate(), @userRef, @number, @partRef)",
+      [
+        { name: "description", type: sql.VarChar, value: Description },
+        { name: "userRef", type: sql.VarChar, value: user.id },
+        { name: "number", type: sql.VarChar, value: Count },
+        { name: "partRef", type: sql.VarChar, value: PartID },
       ]
     );
   } catch (err) {

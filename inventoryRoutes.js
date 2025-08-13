@@ -53,7 +53,7 @@ router.put(
 );
 
 router.get(
-  "/Part",
+  "/Order",
   authenticateJWT,
   authorizeRoles("admin", "user"),
   async (req, res) => {
@@ -88,7 +88,28 @@ router.get(
     getCategorization(req, res);
   }
 );
+
+router.get(
+  "/InventoryVoucher",
+  authenticateJWT,
+  authorizeRoles("admin", "user"),
+  async (req, res) => {
+    getInventoryVoucher(req, res);
+  }
+);
 // service part
+async function getInventoryVoucher(req, res) {
+  try {
+    let InventoryVoucher = await queryDb(
+      "Select * FROM [InventoryVoucher]",
+      []
+    );
+    res.status(200).send(InventoryVoucher);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
 async function getPartLow(req, res) {
   try {
     let parts = await queryDb(

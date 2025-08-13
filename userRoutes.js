@@ -16,11 +16,11 @@ router.post("/Login", async (req, res) => {
 });
 
 router.get("/login", (req, res) => {
-  res.render("login", { error: null });
+  res.json({ error: null });
 });
 
 router.get("/register", (req, res) => {
-  res.render("register", { error: null, formData: null, success: null });
+  res.json({ error: null, formData: null, success: null });
 });
 // Register
 router.post("/Register", async (req, res) => {
@@ -60,7 +60,7 @@ async function EditProfile(req, res) {
   if (!getUserByEmail(email)) {
     return res
       .status(409)
-      .render("register", { error: "کاربری با این ایمیل ثبت نام کرده است." });
+      .json({ error: "کاربری با این ایمیل ثبت نام کرده است." });
   }
 
   try {
@@ -119,7 +119,7 @@ async function Login(req, res) {
   if (user == null) {
     return res
       .status(401)
-      .render("login", { error: "رمز یا نام کاربری اشتباه است." });
+      .json({ error: "رمز یا نام کاربری اشتباه است." });
   }
 
   var roles = [];
@@ -130,7 +130,7 @@ async function Login(req, res) {
       roles.push("user");
     }
   } catch (err) {
-    return res.status(500).render("login", { error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 
   const token = jwt.sign(
@@ -180,25 +180,15 @@ function authorizeRoles(...allowedRoles) {
 
 async function InsertUser(username, password, Name, email, res) {
   if (!(await getUserByUsername(username))) {
-    return res.status(409).render("register", {
+    return res.status(409).json({
       error: "نام کاربری تکراری است.",
-      formData: {
-        Name,
-        email,
-        username,
-      },
       success: null,
     });
   }
 
   if (!(await getUserByEmail(email))) {
-    return res.status(409).render("register", {
+    return res.status(409).json({
       error: "کاربری با این ایمیل ثبت نام کرده است.",
-      formData: {
-        Name,
-        email,
-        username,
-      },
       success: null,
     });
   }
@@ -217,13 +207,8 @@ async function InsertUser(username, password, Name, email, res) {
     throw err;
   }
 
-  res.render("register", {
+  res.json( {
     success: "Registration successful! Redirecting...",
-    formData: {
-      Name,
-      email,
-      username,
-    },
   });
 }
 

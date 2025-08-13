@@ -87,23 +87,22 @@ async function EditProfile(req, res) {
   );
 }
 
-function isLoggedIn(req, res){
+function isLoggedIn(req, res) {
   const token = req.cookies.token;
+  if (!token) return false;
 
-  if (token) {
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-      if (err) {
-        return false;
-      }
-      req.user = user;
-      return true;
-    });
-  } else {
+  try {
+    const user = jwt.verify(token, JWT_SECRET); // synchronous verify
+    req.user = user;
+    return true;
+  } catch (err) {
     return false;
   }
 }
 
+
 async function Login(req, res) {
+  var x = isLoggedIn(req,res);
   if(isLoggedIn(req,res)){
     res.redirect("/inventory/term-courses");
   }
@@ -141,7 +140,7 @@ async function Login(req, res) {
 
   res.cookie("token", token, {
     httpOnly: true,
-    maxAge: 60 * 60 * 1000, // 1 hour
+    maxAge: 60 * 60 * 1000,
   });
 
   res.redirect("/inventory/term-courses");
@@ -215,7 +214,7 @@ async function InsertUser(username, password, Name, email, res) {
 async function getUserByCredentials(username, hashPassword) {
   try {
     const result = await queryDb(
-      "SELECT * FROM [User] WHERE Username = @username AND IsActive = 1",
+      "SELECT * FROM [User] WHERE Username = @username ",
       [{ name: "username", type: sql.VarChar, value: username }]
     );
 
@@ -223,7 +222,7 @@ async function getUserByCredentials(username, hashPassword) {
 
     const user = result[0];
 
-    const isMatch = hashPassword == user.password; 
+    const isMatch = hashPassword == user.Password; 
 
     if (!isMatch) return null;
 
@@ -259,7 +258,7 @@ async function getUserByUsername(username) {
 }
 
 function isAdmin(user) {
-  if (user.isAdmin != 0) {
+  if (user.isAdmin == 0) {
     return true;
   }
   return false;

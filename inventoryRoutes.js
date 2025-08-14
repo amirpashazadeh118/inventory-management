@@ -200,7 +200,7 @@ async function getPartWithFilter(req, res) {
 }
 
 async function createCategory(req, res) {
-  const { Name,	CategorizationRef, Cost } = req.body;
+  const { Name } = req.body;
 
   try {
     let category = await queryDb(

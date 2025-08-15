@@ -160,7 +160,7 @@ async function getOrderWithFilter(req, res) {
     filterQuery += `createdAt > ${afterTime}`;
   }
 
-  var lastQuery = "Select * FROM [order] o join part p on p.PartID = o.partRef ";
+  var lastQuery = "Select o.*, p.name, u.name FROM [order] o join part p on p.PartID = o.partRef join [user] u on u.userId = o.userRef";
   if(isFiltered)lastQuery = lastQuery + filterQuery;
 
   try {

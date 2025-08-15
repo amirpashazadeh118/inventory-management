@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { FormsModule } from '@angular/forms'; // ✅ اضافه کن
-import { HttpClientModule } from '@angular/common/http'; // برای درخواست‌ها
-import { CommonModule } from '@angular/common'; // برای دستورات *ngIf و *ngFor
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 
 
@@ -11,7 +11,7 @@ import { Router, RouterModule } from '@angular/router';
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
-    imports: [CommonModule, FormsModule, HttpClientModule, RouterModule], // ✅ اینجا اضافه کن
+    imports: [CommonModule, FormsModule, HttpClientModule, RouterModule],
 
 })
 export class LoginComponent {

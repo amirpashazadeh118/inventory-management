@@ -9,7 +9,6 @@
       <!-- افزودن کالا -->
       <a class="card" routerLink="/products/new" aria-label="Add Good">
         <div class="card__icon" aria-hidden="true">
-          <!-- plus-square icon -->
           <svg
             viewBox="0 0 24 24"
             width="28"
@@ -32,7 +31,6 @@
       <!-- ثبت سفارش -->
       <a class="card" routerLink="/orders/new" aria-label="Add Order">
         <div class="card__icon" aria-hidden="true">
-          <!-- clipboard-check -->
           <svg
             viewBox="0 0 24 24"
             width="28"
@@ -57,7 +55,6 @@
       <!-- اضافه کردن دسته بندی -->
       <a class="card" routerLink="/categories/new" aria-label="Add Category">
         <div class="card__icon" aria-hidden="true">
-          <!-- arrows left-right -->
           <svg
             viewBox="0 0 24 24"
             width="28"
@@ -81,7 +78,6 @@
       <!-- دیدن همه سفارش‌ها -->
       <a class="card" routerLink="/orders" aria-label="All Orders">
         <div class="card__icon" aria-hidden="true">
-          <!-- list icon -->
           <svg
             viewBox="0 0 24 24"
             width="28"
@@ -128,7 +124,6 @@
       <!-- دیدن همه کالاها -->
       <a class="card" routerLink="/products" aria-label="All Goods">
         <div class="card__icon" aria-hidden="true">
-          <!-- boxes -->
           <svg
             viewBox="0 0 24 24"
             width="28"
@@ -154,7 +149,7 @@
       <div class="trades-column sells">
         <h3>All Sells</h3>
         <ul>
-          <li *ngFor="let sell of sells">{{ sell.pname }}, -{{ sell.Count }}, ${{ sell.Cost }}, {{ sell.CreateAt | date:'medium' }}</li>
+          <li *ngFor="let sell of sells">{{ sell.pname }}, -{{ sell.Count }}, ${{ sell.TotalCost }}, {{ sell.CreateAt | date:'medium' }}</li>
         </ul>
       </div>
 

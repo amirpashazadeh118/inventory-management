@@ -3,9 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { FormsModule } from '@angular/forms'; // ✅ اضافه کن
-import { HttpClientModule } from '@angular/common/http'; // برای درخواست‌ها
-
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -26,7 +25,6 @@ export class RegisterComponent {
     private router: Router,
     private http: HttpClient
   ) {
-    // Initialize form here, AFTER fb is injected
     this.registerForm = this.fb.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
@@ -56,7 +54,6 @@ export class RegisterComponent {
       return;
     }
 
-    // Simulate success
 
     this.http
       .post('/api/Register', {

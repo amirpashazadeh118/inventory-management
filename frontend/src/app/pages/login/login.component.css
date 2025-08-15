@@ -9,14 +9,12 @@
 
       a {
           color: #007bff;
-          /* Bootstrap’s default link blue */
           text-decoration: underline;
           cursor: pointer;
       }
 
       a:hover {
           color: #0056b3;
-          /* darker blue on hover */
           text-decoration: none;
       }
 

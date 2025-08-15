@@ -133,7 +133,7 @@ async function getPartLow(req, res) {
   `;
 
   if (conditions.length > 0) {
-    query += conditions.join(" AND ");
+    query += " AND " + conditions.join(" AND ");
   }
 
   try {
@@ -257,54 +257,71 @@ async function createCategory(req, res) {
 }
 
 async function createPart(req, res) {
-  // Accepts 'Count' from the request body to set initial stock
   const { Name, CategorizationRef, Cost, Count } = req.body;
-  const user = req.user; // Get the logged-in user for the voucher
+  const user = req.user;
 
-  // First, check if a part with the same name already exists
   try {
-    let parts = await queryDb(
-      `SELECT 1 FROM Part WHERE Name = @name`,
+    let existingParts = await queryDb(
+      `SELECT PartID, Remaining FROM Part WHERE Name = @name`,
       [{ name: "name", type: sql.NVarChar, value: Name }]
     );
-    if (parts.length > 0) {
-      return res.status(400).send("This name is already chosen for a part. Please enter another name.");
+
+    if (existingParts.length > 0) {
+      const existingPart = existingParts[0];
+      const newCount = existingPart.Remaining + Count;
+
+      await queryDb(
+        `UPDATE Part SET Remaining = @newCount WHERE PartID = @partId`,
+        [
+          { name: "newCount", type: sql.Int, value: newCount },
+          { name: "partId", type: sql.BigInt, value: existingPart.PartID }
+        ]
+      );
+
+      // creates an InventoryVoucher for this additional stock
+      await queryDb(
+        `INSERT INTO InventoryVoucher (Description, CreateAt, UserRef, Number, PartRef)
+         VALUES (@description, GETDATE(), @userRef, @number, @partRef)`,
+        [
+          { name: "description", type: sql.NVarChar, value: 'Added additional stock' },
+          { name: "userRef", type: sql.BigInt, value: user.id },
+          { name: "number", type: sql.Int, value: Count },
+          { name: "partRef", type: sql.BigInt, value: existingPart.PartID }
+        ]
+      );
+
+      return res.status(200).send({ id: existingPart.PartID, message: 'Stock updated for existing part.' });
+
+    } else {
+      const partResult = await queryDb(
+        `INSERT INTO Part (Name, CategorizationRef, Remaining, Cost)
+         OUTPUT INSERTED.PartID
+         VALUES (@name, @categoryRef, @count, @cost)`,
+        [
+          { name: "name", type: sql.NVarChar, value: Name },
+          { name: "categoryRef", type: sql.BigInt, value: CategorizationRef },
+          { name: "count", type: sql.Int, value: Count },
+          { name: "cost", type: sql.BigInt, value: Cost }
+        ]
+      );
+      const insertedPartId = partResult[0].PartID;
+
+      // creates an InventoryVoucher for this initial stock
+      await queryDb(
+        `INSERT INTO InventoryVoucher (Description, CreateAt, UserRef, Number, PartRef)
+         VALUES (@description, GETDATE(), @userRef, @number, @partRef)`,
+        [
+          { name: "description", type: sql.NVarChar, value: 'Initial stock' },
+          { name: "userRef", type: sql.BigInt, value: user.id },
+          { name: "number", type: sql.Int, value: Count },
+          { name: "partRef", type: sql.BigInt, value: insertedPartId }
+        ]
+      );
+
+      return res.status(200).send({ id: insertedPartId, message: 'New part created.' });
     }
   } catch (err) {
     return res.status(500).send(err.message);
-  }
-
-  // If the name is unique, proceed to create the part and the initial inventory voucher
-  try {
-    // Inserts the part with the initial 'Count' as the 'Remaining' value
-    const partResult = await queryDb(
-      `INSERT INTO Part (Name, CategorizationRef, Remaining, Cost)
-       OUTPUT INSERTED.PartID
-       VALUES (@name, @categoryRef, @count, @cost)`,
-      [
-        { name: "name", type: sql.NVarChar, value: Name },
-        { name: "categoryRef", type: sql.BigInt, value: CategorizationRef },
-        { name: "count", type: sql.Int, value: Count },
-        { name: "cost", type: sql.BigInt, value: Cost }
-      ]
-    );
-    const insertedPartId = partResult[0].PartID;
-
-    // Automatically create an InventoryVoucher for this initial stock ---
-    await queryDb(
-      `INSERT INTO InventoryVoucher (Description, CreateAt, UserRef, Number, PartRef)
-       VALUES (@description, GETDATE(), @userRef, @number, @partRef)`,
-      [
-        { name: "description", type: sql.NVarChar, value: 'Initial stock' },
-        { name: "userRef", type: sql.BigInt, value: user.id },
-        { name: "number", type: sql.Int, value: Count },
-        { name: "partRef", type: sql.BigInt, value: insertedPartId }
-      ]
-    );
-
-    res.status(200).send({ id: insertedPartId });
-  } catch (err) {
-    res.status(500).send(err.message);
   }
 }
 
@@ -348,7 +365,6 @@ async function increasePart(req, res) {
 }
 
 async function createOrder(req, res) {
-  // We only need the PartID, Count, and Description from the user
   const { PartID, Count, Description } = req.body;
   const user = req.user;
 
@@ -382,10 +398,10 @@ async function createOrder(req, res) {
        VALUES (@Description, GETDATE(), @TotalCost, @UserRef, 1, @PartID, @Cost, @Count)`,
       [
         { name: "Description", type: sql.NVarChar, value: Description },
-        { name: "TotalCost", type: sql.BigInt, value: totalCost }, // Use server-calculated cost
+        { name: "TotalCost", type: sql.BigInt, value: totalCost },
         { name: "UserRef", type: sql.BigInt, value: user.id },
         { name: "PartID", type: sql.BigInt, value: PartID },
-        { name: "Cost", type: sql.BigInt, value: actualCost }, // Use actual cost from DB
+        { name: "Cost", type: sql.BigInt, value: actualCost },
         { name: "Count", type: sql.Int, value: Count }
       ]
     );

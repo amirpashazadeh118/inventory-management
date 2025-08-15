@@ -7,6 +7,7 @@ import { AddcategoryComponent } from './pages/addcategory/addcategory.component'
 import { AllgoodsComponent } from './pages/allgoods/allgoods.component';
 import { AddorderComponent } from './pages/addorder/addorder.component';
 import { AllordersComponent } from './pages/allorders/allorders.component';
+import { LowstockComponent } from './pages/lowstock/lowstock.component';
 
 export const routes: Routes = [
       { path: 'login', component: LoginComponent },
@@ -16,7 +17,9 @@ export const routes: Routes = [
       { path: 'categories/new', component: AddcategoryComponent},
       { path: 'products', component: AllgoodsComponent},
       { path: 'orders/new', component: AddorderComponent},
-      { path: 'orders', component: AllordersComponent}
+      { path: 'orders', component: AllordersComponent},
+      { path: 'products/low', component: LowstockComponent}
+
 
       // { path: '/users/edit', component: DashboardComponent },
       // { path: '/orders', component: DashboardComponent },

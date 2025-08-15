@@ -111,11 +111,33 @@ async function getInventoryVoucher(req, res) {
 }
 
 async function getPartLow(req, res) {
+  const { Name, CategorizationRef } = req.query;
+  let conditions = [];
+  let params = [];
+
+  if (Name) {
+    conditions.push("p.Name LIKE @Name");
+    params.push({ name: 'Name', type: sql.NVarChar, value: `%${Name}%` });
+  }
+  if (CategorizationRef) {
+    conditions.push("p.CategorizationRef = @CategorizationRef");
+    params.push({ name: 'CategorizationRef', type: sql.BigInt, value: CategorizationRef });
+  }
+
+  // to fetch the CategoryName for the front-end.
+  let query = `
+    SELECT p.*, c.Name as CategoryName 
+    FROM Part p
+    JOIN Categorization c ON p.CategorizationRef = c.CategorizationID
+    WHERE Remaining < 10
+  `;
+
+  if (conditions.length > 0) {
+    query += conditions.join(" AND ");
+  }
+
   try {
-    let parts = await queryDb(
-      "Select * FROM Part where Remaining < 10 ",
-      []
-    );
+    let parts = await queryDb(query, params);
     res.status(200).send(parts);
   } catch (err) {
     res.status(500).send(err.message);
@@ -164,7 +186,6 @@ async function getOrderWithFilter(req, res) {
   try {
     let orders = await queryDb(query, params);
     res.status(200).send(orders);
-    console.log(orders)
   } catch (err) {
     res.status(500).send(err.message);
   }

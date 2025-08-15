@@ -1,8 +1,11 @@
+-- Create the database if it doesn't exist
 IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = N'ProjectDB')
     CREATE DATABASE [ProjectDB];
 GO
 
 USE [ProjectDB];
+GO
+
 -- TABLE: Categorization
 IF OBJECT_ID('Categorization') IS NULL
 CREATE TABLE Categorization (
@@ -44,11 +47,11 @@ CREATE TABLE [Order] (
   TotalCost BIGINT NOT NULL,
   UserRef BIGINT NOT NULL,
   [State] INT NOT NULL,
-  [PartRef] BIGINT NOT NULL,
+  [PartID] BIGINT NOT NULL,
   [Cost] BIGINT NOT NULL,
-  [Count] INT NOT NULL
+  [Count] INT NOT NULL, -- <-- FIXED: Added a missing comma here
   CONSTRAINT FK_Order_User FOREIGN KEY (UserRef) REFERENCES [User](UserID),
-  CONSTRAINT FK_Order_Part FOREIGN KEY (PartRef) REFERENCES [Part](PartID)
+  CONSTRAINT FK_Order_Part FOREIGN KEY ([PartID]) REFERENCES [Part](PartID) -- <-- FIXED: Changed PartRef to PartID
 );
 GO
 
@@ -62,7 +65,7 @@ CREATE TABLE InventoryVoucher (
   Number INT NOT NULL,
   PartRef BIGINT NOT NULL,
   CONSTRAINT FK_InventoryVoucher_User FOREIGN KEY (UserRef) REFERENCES [User](UserID),
-  CONSTRAINT FK_InventoryVoucherItem_Part FOREIGN KEY (PartRef) REFERENCES Part(PartID)
+  CONSTRAINT FK_InventoryVoucher_Part FOREIGN KEY (PartRef) REFERENCES Part(PartID)
 );
 GO
 
@@ -79,7 +82,7 @@ IF OBJECT_ID('Settings') IS NULL
 CREATE TABLE Settings (
   SettingsID INT NOT NULL PRIMARY KEY CHECK (SettingsID = 1),
   LimmitOfLowCount INT NOT NULL,
-  MoneyTypeRef BIGINT NOT NULL,
+  MoneyTypeRef INT NOT NULL, -- <-- FIXED: Changed BIGINT to INT to match MoneyTypeID
   CONSTRAINT FK_Settings_MoneyType FOREIGN KEY (MoneyTypeRef) REFERENCES MoneyType(MoneyTypeID)
 );
 GO

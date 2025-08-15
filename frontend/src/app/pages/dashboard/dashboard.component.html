@@ -1,0 +1,177 @@
+<!-- فایل: admin-dashboard.component.html -->
+<body>
+  <section class="dashboard" dir="rtl">
+    <header class="dashboard__header">
+      <h1 class="dashboard__title">مدیریت فروشگاه</h1>
+      <p class="dashboard__subtitle">میانبرهای سریع برای بخش‌های اصلی</p>
+    </header>
+
+    <nav class="actions">
+      <!-- افزودن کالا -->
+      <a class="card" routerLink="/products/new" aria-label="Add Good">
+        <div class="card__icon" aria-hidden="true">
+          <!-- plus-square icon -->
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+        </div>
+        <div class="card__body">
+          <h2 class="card__title">Add Good</h2>
+        </div>
+        <span class="card__chevron" aria-hidden="true">›</span>
+      </a>
+
+      <!-- ثبت سفارش -->
+      <a class="card" routerLink="/orders/new" aria-label="Add Order">
+        <div class="card__icon" aria-hidden="true">
+          <!-- clipboard-check -->
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <path
+              d="M9 3h6a2 2 0 0 1 2 2v1h1a2 2 0 0 1 2 2v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V8a2 2 0 0 1 2-2h1V5a2 2 0 0 1 2-2z"
+            ></path>
+            <path d="M9 5h6"></path>
+            <polyline points="9 14 11 16 15 12"></polyline>
+          </svg>
+        </div>
+        <div class="card__body">
+          <h2 class="card__title">Add order</h2>
+        </div>
+        <span class="card__chevron" aria-hidden="true">›</span>
+      </a>
+
+      <!-- تاریخچه ورود و خروج کالاها -->
+      <a class="card" routerLink="/inventory/history" aria-label="Add Category">
+        <div class="card__icon" aria-hidden="true">
+          <!-- arrows left-right -->
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <polyline points="16 3 21 8 16 13"></polyline>
+            <line x1="21" y1="8" x2="3" y2="8"></line>
+            <polyline points="8 21 3 16 8 11"></polyline>
+            <line x1="21" y1="16" x2="3" y2="16"></line>
+          </svg>
+        </div>
+        <div class="card__body">
+          <h2 class="card__title">Add Category</h2>
+        </div>
+        <span class="card__chevron" aria-hidden="true">›</span>
+      </a>
+
+      <!-- دیدن همه سفارش‌ها -->
+      <a class="card" routerLink="/orders" aria-label="All Orders">
+        <div class="card__icon" aria-hidden="true">
+          <!-- list icon -->
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <circle cx="4" cy="6" r="1.5"></circle>
+            <circle cx="4" cy="12" r="1.5"></circle>
+            <circle cx="4" cy="18" r="1.5"></circle>
+          </svg>
+        </div>
+        <div class="card__body">
+          <h2 class="card__title">All orders</h2>
+        </div>
+        <span class="card__chevron" aria-hidden="true">›</span>
+      </a>
+
+      <!-- ادیت کاربر -->
+      <a class="card" routerLink="/users/edit" aria-label="ادیت کاربر">
+        <div class="card__icon" aria-hidden="true">
+          <!-- user-edit -->
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+            <path d="M18.5 14.5l2 2L19 18l-2-2 1.5-1.5z"></path>
+          </svg>
+        </div>
+        <div class="card__body">
+          <h2 class="card__title">ادیت کاربر</h2>
+          <p class="card__desc">ویرایش اطلاعات کاربران</p>
+        </div>
+        <span class="card__chevron" aria-hidden="true">›</span>
+      </a>
+
+      <!-- دیدن همه کالاها -->
+      <a class="card" routerLink="/products" aria-label="All Goods">
+        <div class="card__icon" aria-hidden="true">
+          <!-- boxes -->
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <rect x="3" y="3" width="8" height="8" rx="1.5"></rect>
+            <rect x="13" y="3" width="8" height="8" rx="1.5"></rect>
+            <rect x="3" y="13" width="8" height="8" rx="1.5"></rect>
+            <rect x="13" y="13" width="8" height="8" rx="1.5"></rect>
+          </svg>
+        </div>
+        <div class="card__body">
+          <h2 class="card__title">All Goods</h2>
+        </div>
+        <span class="card__chevron" aria-hidden="true">›</span>
+      </a>
+    </nav>
+
+    <div class="trades-container">
+      <div class="trades-column sells">
+        <h3>All Sells</h3>
+        <ul>
+          <li *ngFor="let sell of sells">{{ sell }}</li>
+        </ul>
+      </div>
+
+      <div class="trades-column buys">
+        <h3>All Buys</h3>
+        <ul>
+          <li *ngFor="let buy of buys">{{ buy }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <footer class="dashboard__footer" aria-hidden="true">
+      <small>© amir pasha store</small>
+    </footer>
+  </section>
+</body>

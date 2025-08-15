@@ -5,7 +5,7 @@ const config = {
   server: 'localhost',
   database: 'ProjectDB',
   user: 'sa',
-  password: '8Asdfghjkl8asdfghjkl',
+  password: 'Sqlserver2022',
   options: {
     encrypt: false,
     trustServerCertificate: true,

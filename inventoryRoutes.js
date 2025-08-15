@@ -304,7 +304,7 @@ async function createOrder(req, res) {
 
   try {
     const result = await queryDb(
-      `INSERT INTO [Order] (Description, CreateAt, TotalCost, UserRef)
+      `INSERT INTO [Order] (Description, CreateAt, TotalCost, UserRef,state,partRef, [count],TotalCost)
       VALUES (@Description, getDate(), @TotalCost, @UserRef, 1, @PartID, @Count, @Cost)`,
       [
         { name: "Description", type: sql.NVarChar, value: Description },

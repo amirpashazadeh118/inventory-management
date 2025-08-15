@@ -1,0 +1,16 @@
+<div class="form-container">
+  <div class="form-card">
+    <button class="back-button" (click)="goBack()">← Back to Dashboard</button>
+    <h3 class="form-title">Create New Category</h3>
+    
+    <form (ngSubmit)="onAddCategorySubmit()" #categoryForm="ngForm">
+      <div class="form-group">
+        <label for="categoryName">Category Name</label>
+        <input type="text" id="categoryName" name="Name" class="form-control" 
+               [(ngModel)]="newCategory.Name" required>
+      </div>
+      
+      <button type="submit" class="submit-button" [disabled]="!categoryForm.form.valid">Create Category</button>
+    </form>
+  </div>
+</div>

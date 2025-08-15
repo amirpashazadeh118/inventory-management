@@ -139,7 +139,7 @@ async function getOrderWithFilter(req, res) {
 
   var filterQuery = " where ";
   var isFiltered = false;
-  if(Name != null){
+  if(partName != null){
     if(isFiltered) filterQuery = filterQuery + " and "
     isFiltered = true;
     filterQuery = `p.Name like N'%${partName}%'`;

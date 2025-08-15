@@ -128,9 +128,9 @@ async function getCategorization(req, res) {
       "Select * FROM Categorization ",
       []
     );
-    res.status(200).send(categories);
+    return res.status(200).send(categories);
   } catch (err) {
-    res.status(500).send(err.message);
+    return res.status(500).send(err.message);
   }
 }
 

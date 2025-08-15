@@ -157,14 +157,14 @@
       <div class="trades-column sells">
         <h3>All Sells</h3>
         <ul>
-          <li *ngFor="let sell of sells">{{ sell.pname }} - {{ sell.Description }}</li>
+          <li *ngFor="let sell of sells">{{ sell.pname }}, -{{ sell.Count }}, ${{ sell.Cost }}, {{ sell.CreateAt | date:'medium' }}</li>
         </ul>
       </div>
 
       <div class="trades-column buys">
         <h3>All Buys</h3>
         <ul>
-          <li *ngFor="let buy of buys">+{{ buy.Number }} {{ buy.pname }} - {{ buy.Description }}</li>
+          <li *ngFor="let buy of buys">{{ buy.pname }},  +{{ buy.Number }}, {{buy.CreateAt | date:'medium'}}</li>
         </ul>
       </div>
     </div>

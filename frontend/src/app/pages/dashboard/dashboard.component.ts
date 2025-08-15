@@ -10,7 +10,9 @@ export interface Order {
   pname: string;
   uname: string;
   State: number;
-  TotalCost: number;
+  Cost: number;
+  CreateAt: string;
+  Count: number
 }
 
 export interface InventoryVoucher {
@@ -19,6 +21,7 @@ export interface InventoryVoucher {
   pname: string;
   uname: string;
   Number: number;
+  CreateAt: string;
 }
 
 @Component({

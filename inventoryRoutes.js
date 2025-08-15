@@ -164,6 +164,7 @@ async function getOrderWithFilter(req, res) {
   try {
     let orders = await queryDb(query, params);
     res.status(200).send(orders);
+    console.log(orders)
   } catch (err) {
     res.status(500).send(err.message);
   }

@@ -142,22 +142,22 @@ async function getOrderWithFilter(req, res) {
   if(partName != null){
     if(isFiltered) filterQuery = filterQuery + " and "
     isFiltered = true;
-    filterQuery = `p.Name like N'%${partName}%'`;
+    filterQuery += `p.Name like N'%${partName}%'`;
   }
   if(state != null){
     if(isFiltered) filterQuery = filterQuery + " and "
     isFiltered = true;
-    filterQuery = `state = ${state}`;
+    filterQuery += `state = ${state}`;
   }
   if(beforeTime != null){
     if(isFiltered) filterQuery = filterQuery + " and "
     isFiltered = true;
-    filterQuery = `createdAt < ${beforeTime}`;
+    filterQuery += `createdAt < ${beforeTime}`;
   }
   if(afterTime != null){
     if(isFiltered) filterQuery = filterQuery + " and "
     isFiltered = true;
-    filterQuery = `createdAt > ${afterTime}`;
+    filterQuery += `createdAt > ${afterTime}`;
   }
 
   var lastQuery = "Select * FROM [order] o join part p on p.PartID = o.partRef ";

@@ -142,7 +142,7 @@ async function Login(req, res) {
     maxAge: 60 * 60 * 1000,
   });
 
-  res.redirect("/inventory/term-courses");
+  res.status(200).json({ message: "Login successful" });
 }
 
 function authenticateJWT(req, res, next) {

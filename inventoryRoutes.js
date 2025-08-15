@@ -46,7 +46,7 @@ router.post(
 router.put(
   "/Order",
   authenticateJWT,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "user"),
   async (req, res) => {
     acceptOrder(req, res);
   }
@@ -101,7 +101,7 @@ router.get(
 async function getInventoryVoucher(req, res) {
   try {
     let InventoryVoucher = await queryDb(
-      "Select i.*, p.name pname, u.name uname FROM [InventoryVoucher] i join part p on p.PartID = i.partRef join [user] u on u.userId = i.userRef",
+      "Select i.*, p.name as pname, u.name as uname FROM [InventoryVoucher] i join part p on p.PartID = i.partRef join [user] u on u.userId = i.userRef",
       []
     );
     res.status(200).send(InventoryVoucher);
@@ -128,71 +128,74 @@ async function getCategorization(req, res) {
       "Select * FROM Categorization ",
       []
     );
-    return res.status(200).send(categories);
+    res.status(200).send(categories);
   } catch (err) {
-    return res.status(500).send(err.message);
+    res.status(500).send(err.message);
   }
 }
 
 async function getOrderWithFilter(req, res) {
   const { partName, state, beforeTime, afterTime} = req.query;
+  let conditions = [];
+  let params = [];
 
-  var filterQuery = " where ";
-  var isFiltered = false;
-  if(partName != null){
-    if(isFiltered) filterQuery = filterQuery + " and "
-    isFiltered = true;
-    filterQuery += `p.Name like N'%${partName}%'`;
+  if (partName) {
+    conditions.push("p.Name LIKE @partName");
+    params.push({ name: 'partName', type: sql.NVarChar, value: `%${partName}%` });
   }
-  if(state != null){
-    if(isFiltered) filterQuery = filterQuery + " and "
-    isFiltered = true;
-    filterQuery += `state = ${state}`;
+  if (state) {
+    conditions.push("o.State = @state");
+    params.push({ name: 'state', type: sql.Int, value: state });
   }
-  if(beforeTime != null){
-    if(isFiltered) filterQuery = filterQuery + " and "
-    isFiltered = true;
-    filterQuery += `createdAt < ${beforeTime}`;
+  if (beforeTime) {
+    conditions.push("o.CreateAt < @beforeTime");
+    params.push({ name: 'beforeTime', type: sql.DateTime, value: beforeTime });
   }
-  if(afterTime != null){
-    if(isFiltered) filterQuery = filterQuery + " and "
-    isFiltered = true;
-    filterQuery += `createdAt > ${afterTime}`;
+  if (afterTime) {
+    conditions.push("o.CreateAt > @afterTime");
+    params.push({ name: 'afterTime', type: sql.DateTime, value: afterTime });
   }
 
-  var lastQuery = "Select o.*, p.name pname, u.name uname FROM [order] o join part p on p.PartID = o.partRef join [user] u on u.userId = o.userRef";
-  if(isFiltered)lastQuery = lastQuery + filterQuery;
+  let query = "Select o.*, p.Name as pname, u.Name as uname FROM [Order] o join Part p on p.PartID = o.PartID join [User] u on u.UserID = o.UserRef";
+  if (conditions.length > 0) {
+    query += " WHERE " + conditions.join(" AND ");
+  }
 
   try {
-    let parts = await queryDb(
-      lastQuery,
-      []
-    );
-    res.status(200).send(parts);
+    let orders = await queryDb(query, params);
+    res.status(200).send(orders);
   } catch (err) {
     res.status(500).send(err.message);
   }
 }
 
 async function getPartWithFilter(req, res) {
-  const { Name,	CategorizationRef} = req.query;
+  const { Name, CategorizationRef } = req.query;
+  let conditions = [];
+  let params = [];
 
-  var filterQuery = null;
-  if(Name != null){
-    filterQuery = `Where p.Name like N'%${Name}%'`;
-  } else if(CategorizationRef != null){
-    filterQuery = `Where p.CategorizationRef = ${CategorizationRef}`;
+  if (Name) {
+    conditions.push("p.Name LIKE @Name");
+    params.push({ name: 'Name', type: sql.NVarChar, value: `%${Name}%` });
+  }
+  if (CategorizationRef) {
+    conditions.push("p.CategorizationRef = @CategorizationRef");
+    params.push({ name: 'CategorizationRef', type: sql.BigInt, value: CategorizationRef });
   }
 
-  if(CategorizationRef != null && filterQuery != null){
-    filterQuery = `and Where p.Name like N'%${Name}%'`;
+  // to fetch the CategoryName for the front-end.
+  let query = `
+    SELECT p.*, c.Name as CategoryName 
+    FROM Part p
+    JOIN Categorization c ON p.CategorizationRef = c.CategorizationID
+  `;
+
+  if (conditions.length > 0) {
+    query += " WHERE " + conditions.join(" AND ");
   }
 
   try {
-    let parts = await queryDb(
-      "Select * FROM Part p" + filterQuery,
-      []
-    );
+    let parts = await queryDb(query, params);
     res.status(200).send(parts);
   } catch (err) {
     res.status(500).send(err.message);
@@ -208,21 +211,23 @@ async function createCategory(req, res) {
       where Name = @name`,
       [{ name: "name", type: sql.NVarChar, value: Name }]
     );
-    if(category.length > 0)
-      res.status(400).send("This name is already choosed for a Categorization. enter another name!");
+    if(category.length > 0) {
+      return res.status(400).send("This name is already choosed for a Categorization. enter another name!");
+    }
   } catch (err) {
-    res.status(500).send(err.message);
+    return res.status(500).send(err.message);
   }
 
   try {
     const result = await queryDb(
       `INSERT INTO Categorization (Name)
+      OUTPUT INSERTED.CategorizationID
       VALUES (@name)`,
       [
         { name: "name", type: sql.NVarChar, value: Name }
       ]
     );
-    const insertedId = result.recordset[0].CategorizationID;
+    const insertedId = result[0].CategorizationID;
     res.status(200).send({ id: insertedId }); 
   } catch (err) {
     res.status(500).send(err.message);
@@ -230,49 +235,70 @@ async function createCategory(req, res) {
 }
 
 async function createPart(req, res) {
-  const { Name,	CategorizationRef, Cost } = req.body;
+  // Accepts 'Count' from the request body to set initial stock
+  const { Name, CategorizationRef, Cost, Count } = req.body;
+  const user = req.user; // Get the logged-in user for the voucher
 
+  // First, check if a part with the same name already exists
   try {
     let parts = await queryDb(
-      `Select 1 FROM Part t
-      where Name = @name`,
+      `SELECT 1 FROM Part WHERE Name = @name`,
       [{ name: "name", type: sql.NVarChar, value: Name }]
     );
-    if(parts.length > 0)
-      res.status(400).send("This name is already choosed for a part. enter another name!");
+    if (parts.length > 0) {
+      return res.status(400).send("This name is already chosen for a part. Please enter another name.");
+    }
   } catch (err) {
-    res.status(500).send(err.message);
+    return res.status(500).send(err.message);
   }
 
+  // If the name is unique, proceed to create the part and the initial inventory voucher
   try {
-    const result = await queryDb(
+    // Inserts the part with the initial 'Count' as the 'Remaining' value
+    const partResult = await queryDb(
       `INSERT INTO Part (Name, CategorizationRef, Remaining, Cost)
-      VALUES (@name, @categoryRef, 0, @cost)`,
+       OUTPUT INSERTED.PartID
+       VALUES (@name, @categoryRef, @count, @cost)`,
       [
         { name: "name", type: sql.NVarChar, value: Name },
         { name: "categoryRef", type: sql.BigInt, value: CategorizationRef },
+        { name: "count", type: sql.Int, value: Count },
         { name: "cost", type: sql.BigInt, value: Cost }
       ]
     );
-    const insertedId = result.recordset[0].PartID;
-    res.status(200).send({ id: insertedId }); 
+    const insertedPartId = partResult[0].PartID;
+
+    // Automatically create an InventoryVoucher for this initial stock ---
+    await queryDb(
+      `INSERT INTO InventoryVoucher (Description, CreateAt, UserRef, Number, PartRef)
+       VALUES (@description, GETDATE(), @userRef, @number, @partRef)`,
+      [
+        { name: "description", type: sql.NVarChar, value: 'Initial stock' },
+        { name: "userRef", type: sql.BigInt, value: user.id },
+        { name: "number", type: sql.Int, value: Count },
+        { name: "partRef", type: sql.BigInt, value: insertedPartId }
+      ]
+    );
+
+    res.status(200).send({ id: insertedPartId });
   } catch (err) {
     res.status(500).send(err.message);
   }
 }
 
 async function increasePart(req, res) {
-  const { PartID,	Count, Description } = req.body;
+  const { PartID, Count, Description } = req.body;
   const user = req.user;
 
   try {
     let parts = await queryDb(
-      `Select 1 FROM Part t
+      `SELECT Remaining FROM Part t
       where PartID = @partId`,
-      [{ name: "name", type: sql.BigInt, value: Name }]
+      [{ name: "partId", type: sql.BigInt, value: PartID }]
     );
-    if(parts.length = 0)
-      res.status(400).send("There is no part with that ID!");
+    if(parts.length === 0) {
+      return res.status(400).send("There is no part with that ID!");
+    }
 
     const newCount = parts[0].Remaining + Count;
 
@@ -285,101 +311,127 @@ async function increasePart(req, res) {
     );
 
     await queryDb(
-      "INSERT INTO [InventoryVoucher](Description, CraetedAt, UserRef, Number, PartRef) VALUES (@description, getDate(), @userRef, @number, @partRef)",
+      "INSERT INTO [InventoryVoucher](Description, CreateAt, UserRef, Number, PartRef) VALUES (@description, GETDATE(), @userRef, @number, @partRef)",
       [
-        { name: "description", type: sql.VarChar, value: Description },
-        { name: "userRef", type: sql.VarChar, value: user.id },
-        { name: "number", type: sql.VarChar, value: Count },
-        { name: "partRef", type: sql.VarChar, value: PartID },
+        { name: "description", type: sql.NVarChar, value: Description },
+        { name: "userRef", type: sql.BigInt, value: user.id },
+        { name: "number", type: sql.Int, value: Count },
+        { name: "partRef", type: sql.BigInt, value: PartID },
       ]
     );
+    res.status(200).send({ message: 'Part increased successfully' });
   } catch (err) {
     res.status(500).send(err.message);
   }
 }
 
 async function createOrder(req, res) {
-  const { Description, TotalCost, PartID, Count, Cost } = req.body;
+  // We only need the PartID, Count, and Description from the user
+  const { PartID, Count, Description } = req.body;
   const user = req.user;
 
   try {
-    const result = await queryDb(
-      `INSERT INTO [Order] (Description, CreateAt, TotalCost, UserRef,state,partRef, [count],TotalCost)
-      VALUES (@Description, getDate(), @TotalCost, @UserRef, 1, @PartID, @Count, @Cost)`,
+    // Step 1: Get the part's actual data from the database
+    const partResult = await queryDb(
+      `SELECT Cost, Remaining FROM Part WHERE PartID = @PartID`,
+      [{ name: "PartID", type: sql.BigInt, value: PartID }]
+    );
+
+    if (partResult.length === 0) {
+      return res.status(404).send("The selected part does not exist.");
+    }
+
+    const part = partResult[0];
+    const actualCost = part.Cost;
+    const availableStock = part.Remaining;
+
+    // Step 2: Validate the order against available stock
+    if (Count > availableStock) {
+      return res.status(400).send(`Cannot order more than the available stock. Only ${availableStock} remaining.`);
+    }
+
+    // Step 3: Calculate the total cost securely on the server
+    const totalCost = actualCost * Count;
+
+    // Step 4: Insert the validated order into the database with State = 1
+    const orderResult = await queryDb(
+      `INSERT INTO [Order] (Description, CreateAt, TotalCost, UserRef, State, PartID, Cost, [Count])
+       OUTPUT INSERTED.OrderID
+       VALUES (@Description, GETDATE(), @TotalCost, @UserRef, 1, @PartID, @Cost, @Count)`,
       [
         { name: "Description", type: sql.NVarChar, value: Description },
-        { name: "TotalCost", type: sql.BigInt, value: TotalCost },
+        { name: "TotalCost", type: sql.BigInt, value: totalCost }, // Use server-calculated cost
         { name: "UserRef", type: sql.BigInt, value: user.id },
         { name: "PartID", type: sql.BigInt, value: PartID },
-        { name: "Cost", type: sql.BigInt, value: Cost },
-        { name: "Count", type: sql.BigInt, value: Count }
+        { name: "Cost", type: sql.BigInt, value: actualCost }, // Use actual cost from DB
+        { name: "Count", type: sql.Int, value: Count }
       ]
     );
-    const orderId = result.recordset[0].orderID;
-    res.status(200).send({ id: orderId }); 
+    const orderId = orderResult[0].OrderID;
+    res.status(200).send({ id: orderId });
+
   } catch (err) {
     res.status(500).send(err.message);
   }
 }
 
 async function acceptOrder(req, res) {
-  const { orderID, partID, state , count, partName} = req.body;
+  const { orderID, partID, state, count, partName } = req.body;
 
-  if(state === 3){// reject
+  if (state === 3) { // Reject order
     try {
-      const result = await queryDb(
-        `UPDATE [Order] SET State = 3 where OrderID = @OrderID`,
+      await queryDb(
+        `UPDATE [Order] SET State = 3 WHERE OrderID = @OrderID`,
+        [{ name: "OrderID", type: sql.BigInt, value: orderID }]
+      );
+      sendEmail("Order Rejected", `Order #${orderID} has been rejected.`);
+      return res.status(200).send({ message: "Order rejected successfully" });
+    } catch (err) {
+      return res.status(500).send(err.message);
+    }
+  } 
+  
+  if (state === 2) {
+    try {
+      const partResult = await queryDb(
+        `SELECT Remaining FROM Part WHERE PartID = @PartID`,
+        [{ name: "PartID", type: sql.BigInt, value: partID }]
+      );
+      
+      if (partResult.length === 0) {
+        return res.status(404).send("Part not found.");
+      }
+
+      const remainingStock = partResult[0].Remaining;
+      const newRemaining = remainingStock - count;
+
+      if (newRemaining < 0) {
+        return res.status(400).send("There is not enough stock to fulfill this order.");
+      }
+      
+      await queryDb(
+        `UPDATE Part SET Remaining = @newRemaining WHERE PartID = @PartID;
+         UPDATE [Order] SET State = 2 WHERE OrderID = @OrderID;`,
         [
+          { name: "newRemaining", type: sql.Int, value: newRemaining },
+          { name: "PartID", type: sql.BigInt, value: partID },
           { name: "OrderID", type: sql.BigInt, value: orderID }
         ]
       );
-      sendEmail("Order Rejected",`order ${orderID} rejected`);
-      res.status(200).send({ id: orderId }); 
-    } catch (err) {
-      res.status(500).send(err.message);
-    }
-  } else if (state === 2) { //accept
-    try {
-      const part = await queryDb(
-        `Select Remaining FROM [Part] where PartID = @PartID`,
-        [
-          { name: "PartID", type: sql.BigInt, value: partID }
-        ]
-      );
-      var Remaining = part.recordset[0];
-      var newRemaining = Remaining - count;
-      if(newRemaining < 0){
-        return res.status(400).send("There is not enough goods in inventory"); 
-      }
-      
-      const result = await queryDb(
-        `Update [Part] set remaining = @newRemaining where PartID = @PartID;
-         UPDATE [Order] SET State = 2 where OrderID = @OrderID `,
-        [
-          { name: "PartID", type: sql.BigInt, value: partID },
-          { name: "newRemaining", type: sql.Int, value: newRemaining },
-          { name: "OrderID", type: sql.Int, value: orderID }
-        ]
-      );
 
-      sendEmail("Order Accepted",`order ${orderID} accepted`);
+      sendEmail("Order Accepted", `Order #${orderID} has been accepted.`);
 
-      const partRemaining = await queryDb(
-        `Select Remaining FROM [Part] where PartID = @PartID`,
-        [
-          { name: "PartID", type: sql.BigInt, value: partID }
-        ]
-      );
-      var RemainingNow = part.partRemaining[0];
-      if(RemainingNow < 10){
-        sendEmail("LOW Part Remaining",`there is just RemainingNow of ${partName} in ${inventory}`);
+      if (newRemaining < 10) {
+        sendEmail("Low Stock Warning", `There are only ${newRemaining} of ${partName} left in inventory.`);
       }
+      return res.status(200).send({ message: 'Order accepted successfully' });
     } catch (err) {
-      res.status(500).send(err.message);
+      return res.status(500).send(err.message);
     }
-  } else {
-    res.status(500).send("Invalid State");
   }
+  
+  // If the state is not 2 or 3
+  return res.status(400).send("Invalid state provided.");
 }
 
 async function sendEmail(subject, text) {
@@ -392,7 +444,6 @@ async function sendEmail(subject, text) {
       },
     });
 
-    // Set up mail options
     const mailOptions = {
       from: '"takhfifano" <takhfifano@gmail.com>',
       to: "amiramjad2002@gmail.com", // TODO email of admin or ...
@@ -400,9 +451,8 @@ async function sendEmail(subject, text) {
       text: text,
     };
 
-    // Send mail
-    const info = await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
   } catch (err) {
-    return res.status(500).send(`Failed to send email: ${err.message}`);
+    console.error(`Failed to send email: ${err.message}`);
   }
 }

@@ -33,7 +33,7 @@ export class DashboardComponent implements OnInit {
   // Added properties to hold the data for your HTML
   sells: Order[] = [];
   buys: InventoryVoucher[] = [];
-  private apiUrl = '/inventory';
+  private apiUrl = 'api//inventory';
 
   // Injected HttpClient to make API calls
   constructor(private http: HttpClient) { }

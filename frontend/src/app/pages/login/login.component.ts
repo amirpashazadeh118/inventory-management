@@ -9,8 +9,8 @@ import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-login',
-  templateUrl: './home2.component.html',
-  styleUrls: ['./home2.component.css'],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css'],
     imports: [CommonModule, FormsModule, HttpClientModule, RouterModule], // ✅ اینجا اضافه کن
 
 })

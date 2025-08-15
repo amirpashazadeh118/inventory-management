@@ -1,6 +1,3 @@
-<!-- 
-  File: src/app/pages/addgood/addgood.component.html
--->
 <div class="form-container">
   <div class="form-card">
     <button class="back-button" (click)="goBack()">← Back to Dashboard</button>
@@ -17,6 +14,12 @@
         <label for="partCost">Cost</label>
         <input type="number" id="partCost" name="Cost" class="form-control"
                [(ngModel)]="newPart.Cost" required min="0">
+      </div>
+
+      <div class="form-group">
+        <label for="partCount">Initial Count</label>
+        <input type="number" id="partCount" name="Count" class="form-control"
+               [(ngModel)]="newPart.Count" required min="0">
       </div>
 
       <div class="form-group">

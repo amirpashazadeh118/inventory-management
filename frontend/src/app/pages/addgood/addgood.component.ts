@@ -1,13 +1,9 @@
-/*
-  File: src/app/pages/addgood/addgood.component.ts
-*/
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-// --- Interface for Category Data Model ---
 export interface Category {
   CategorizationID: number;
   Name: string;
@@ -26,7 +22,8 @@ export class AddgoodComponent implements OnInit {
   newPart = {
     Name: '',
     Cost: null,
-    CategorizationRef: ''
+    CategorizationRef: '',
+    Count: null // This will hold the initial stock count
   };
 
   private apiUrl = '/api/inventory';
@@ -38,7 +35,8 @@ export class AddgoodComponent implements OnInit {
   }
 
   onAddPartSubmit(): void {
-    if (!this.newPart.Name || !this.newPart.Cost || !this.newPart.CategorizationRef) {
+    // Added validation for the new 'Count' field
+    if (!this.newPart.Name || !this.newPart.Cost || !this.newPart.CategorizationRef || this.newPart.Count === null) {
       alert('Please fill out all fields.');
       return;
     }
@@ -47,7 +45,6 @@ export class AddgoodComponent implements OnInit {
       next: (response) => {
         console.log('Part created successfully', response);
         alert('New good added successfully!');
-        // Navigate back to the dashboard after success
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
@@ -66,7 +63,6 @@ export class AddgoodComponent implements OnInit {
     });
   }
 
-  // Method to navigate back to the dashboard
   goBack(): void {
     this.router.navigate(['/dashboard']);
   }

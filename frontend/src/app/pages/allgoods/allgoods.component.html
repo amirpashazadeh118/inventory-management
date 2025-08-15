@@ -1,0 +1,56 @@
+<div class="table-container">
+  <div class="table-card">
+    <div class="table-header">
+      <h3 class="table-title">All Goods in Inventory</h3>
+      <button class="back-button" (click)="goBack()">← Back to Dashboard</button>
+    </div>
+
+    <div class="filter-container">
+      <div class="filter-group">
+        <label for="filterName">Filter by Name</label>
+        <input type="text" id="filterName" class="form-control" 
+               [(ngModel)]="filters.Name" 
+               (keyup.enter)="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <label for="filterCategory">Filter by Category</label>
+        <select id="filterCategory" class="form-control" [(ngModel)]="filters.CategorizationRef">
+          <option value="">All Categories</option>
+          <option *ngFor="let category of categories" [value]="category.CategorizationID">
+            {{ category.Name }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button class="filter-button apply" (click)="applyFilters()">Apply Filters</button>
+        <button class="filter-button reset" (click)="resetFilters()">Reset</button>
+      </div>
+    </div>
+    
+    <div class="table-wrapper">
+      <table class="goods-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Cost</th>
+            <th>Remaining Stock</th>
+            <th>Date Added</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let part of parts">
+            <td>{{ part.Name }}</td>
+            <td>{{ part.CategoryName }}</td>
+            <td>{{ part.Cost | currency }}</td>
+            <td>{{ part.Remaining }}</td>
+            <td>{{ part.CreatedAt | date:'medium' }}</td>
+          </tr>
+          <tr *ngIf="parts.length === 0">
+            <td colspan="5" class="no-data-cell">No goods found matching the criteria.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

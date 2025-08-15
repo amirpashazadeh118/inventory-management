@@ -1,0 +1,41 @@
+<div class="form-container">
+  <div class="form-card">
+    <button class="back-button" (click)="goBack()">← Back to Dashboard</button>
+    <h3 class="form-title">Create New Order</h3>
+    
+    <form (ngSubmit)="onAddOrderSubmit()" #orderForm="ngForm">
+      
+      <div class="form-group">
+        <label for="orderPart">Select a Good</label>
+        <select id="orderPart" name="PartID" class="form-control"
+                [(ngModel)]="newOrder.PartID" (change)="onPartSelectionChange()" required>
+          <option value="" disabled>-- Choose a good --</option>
+          <option *ngFor="let part of availableParts" [value]="part.PartID">
+            {{ part.Name }} (Available: {{ part.Remaining }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="selectedPart">
+        <label for="orderCount">Quantity</label>
+        <input type="number" id="orderCount" name="Count" class="form-control"
+               [(ngModel)]="newOrder.Count" (input)="updateTotalCost()" 
+               required min="1" [max]="selectedPart.Remaining">
+        <small class="stock-info">Maximum order quantity: {{ selectedPart.Remaining }}</small>
+      </div>
+
+      <div class="form-group">
+        <label for="orderDescription">Description</label>
+        <textarea id="orderDescription" name="Description" class="form-control" 
+                  rows="3" [(ngModel)]="newOrder.Description" required></textarea>
+      </div>
+
+      <div class="cost-display" *ngIf="totalCost > 0">
+        <span class="cost-label">Total Cost:</span>
+        <span class="cost-value">{{ totalCost | currency }}</span>
+      </div>
+      
+      <button type="submit" class="submit-button" [disabled]="!orderForm.form.valid">Create Order</button>
+    </form>
+  </div>
+</div>

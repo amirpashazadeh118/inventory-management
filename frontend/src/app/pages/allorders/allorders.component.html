@@ -1,0 +1,45 @@
+<div class="table-container">
+  <div class="table-card">
+    <div class="table-header">
+      <h3 class="table-title">Pending Orders</h3>
+      <button class="back-button" (click)="goBack()">← Back to Dashboard</button>
+    </div>
+    
+    <div class="table-wrapper">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Total Cost</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of pendingOrders">
+            <td>#{{ order.OrderID }}</td>
+            <td>{{ order.uname }}</td>
+            <td>{{ order.pname }}</td>
+            <td>{{ order.Count }}</td>
+            <td>{{ order.TotalCost | currency }}</td>
+            <td><span class="status pending">Pending</span></td>
+            <td>
+              <select class="status-select" (change)="onStatusChange(order, $event)">
+                <option value="1" selected>Pending</option>
+                <option value="2">Accept</option>
+                <option value="3">Reject</option>
+              </select>
+            </td>
+          </tr>
+          <tr *ngIf="pendingOrders.length === 0">
+            <td colspan="7" class="no-data-cell">No pending orders found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

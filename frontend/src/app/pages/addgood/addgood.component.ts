@@ -29,7 +29,7 @@ export class AddgoodComponent implements OnInit {
     CategorizationRef: ''
   };
 
-  private apiUrl = '/inventory';
+  private apiUrl = '/api/inventory';
 
   constructor(private http: HttpClient, private router: Router) { }
 

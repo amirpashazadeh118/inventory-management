@@ -101,7 +101,7 @@ router.get(
 async function getInventoryVoucher(req, res) {
   try {
     let InventoryVoucher = await queryDb(
-      "Select * FROM [InventoryVoucher]",
+      "Select i.*, p.name pname, u.name uname FROM [InventoryVoucher] i join part p on p.PartID = i.partRef join [user] u on u.userId = i.userRef",
       []
     );
     res.status(200).send(InventoryVoucher);
@@ -160,7 +160,7 @@ async function getOrderWithFilter(req, res) {
     filterQuery += `createdAt > ${afterTime}`;
   }
 
-  var lastQuery = "Select o.*, p.name, u.name FROM [order] o join part p on p.PartID = o.partRef join [user] u on u.userId = o.userRef";
+  var lastQuery = "Select o.*, p.name pname, u.name uname FROM [order] o join part p on p.PartID = o.partRef join [user] u on u.userId = o.userRef";
   if(isFiltered)lastQuery = lastQuery + filterQuery;
 
   try {

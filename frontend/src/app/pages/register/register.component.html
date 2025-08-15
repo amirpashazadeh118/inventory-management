@@ -1,0 +1,61 @@
+<body>
+  <div class="register-container">
+    <h2>Register</h2>
+
+    <div *ngIf="passwordMismatch" class="error">Passwords do not match.</div>
+    <div *ngIf="error" class="error">{{ error }}</div>
+    <div *ngIf="success" class="success">{{ success }}</div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div>First Name</div>
+      <input
+        type="text"
+        [(ngModel)]="firstname"
+        formControlName="firstName"
+        placeholder="First Name"
+        required
+      />
+      <div>last Name</div>
+      <input
+        [(ngModel)]="lastname"
+        type="text"
+        formControlName="lastName"
+        placeholder="Last Name"
+        required
+      />
+      <div>Email</div>
+      <input
+        [(ngModel)]="email"
+        type="email"
+        formControlName="email"
+        placeholder="Email"
+        required
+      />
+      <div>UserName</div>
+      <input
+        [(ngModel)]="username"
+        type="text"
+        formControlName="username"
+        placeholder="Username"
+        required
+      />
+      <div>Password</div>
+      <input
+        [(ngModel)]="password"
+        type="password"
+        formControlName="password"
+        placeholder="Password"
+        required
+      />
+      <div>Password Again</div>
+      <input
+        type="password"
+        formControlName="confirmPassword"
+        placeholder="Confirm Password"
+        required
+      />
+
+      <button type="submit" [disabled]="registerForm.invalid">Sign Up</button>
+    </form>
+  </div>
+</body>
